@@ -134,7 +134,7 @@ class HTRModel:
 
         return callbacks
 
-    def compile(self, learning_rate=None, initial_step=0):
+    def compile(self, learning_rate=None, initial_step=0, target=None, output=None):
         """
         Configures the HTR Model for training/predict.
 
@@ -155,6 +155,7 @@ class HTRModel:
         # create and compile
         self.model = Model(inputs=inputs, outputs=outputs)
         self.model.compile(optimizer=optimizer, loss=self.ctc_loss_lambda_func)
+        tf.keras.utils.plot_model(self.model, to_file=os.path.join(output, target), show_shapes=True)
 
     def fit(self,
             x=None,
@@ -388,8 +389,48 @@ def cnn_bilstm(input_size, d_model):
     """proposed model"""
     input_data = Input(name="input", shape=input_size)
     
+    #OG MODEL NA 5MILLION PARAM
+    # cnn = Conv2D(filters=16, kernel_size=(3,3), activation='relu', padding="same")(input_data)
+    # cnn = BatchNormalization(axis = -1)(cnn)
+
+    # cnn = Conv2D(filters=16, kernel_size=(3,3), activation='relu', padding="same")(cnn)
+    # cnn = BatchNormalization(axis = -1)(cnn)
+
+    # cnn = MaxPooling2D(pool_size=(2,2), strides=(2,2))(cnn)
+
+    # cnn = Conv2D(filters=32, kernel_size=(3,3),activation='relu', padding="same")(cnn)
+    # cnn = BatchNormalization(axis = -1)(cnn)
+
+    # cnn = Conv2D(filters=32, kernel_size=(3,3),activation='relu', padding="same")(cnn)
+    # cnn = BatchNormalization(axis = -1)(cnn)
+
+    # cnn = MaxPooling2D(pool_size=(2,2), strides=(2,2))(cnn)
+
+    # cnn = Conv2D(filters=64, kernel_size=(3,3),activation='relu', padding="same")(cnn)
+    # cnn = BatchNormalization(axis = -1)(cnn)
+
+    # cnn = Conv2D(filters=64, kernel_size=(3,3),activation='relu', padding="same")(cnn)
+    # cnn = BatchNormalization(axis = -1)(cnn)
+
+    # cnn = Conv2D(filters=128, kernel_size=(3,3),activation='relu', padding="same")(cnn)
+    # cnn = BatchNormalization(axis = -1)(cnn)
+
+    # cnn = MaxPooling2D(pool_size=(2,1), strides=(2,1))(cnn)
+    
+    # shape = cnn.get_shape()
+    # blstm = Reshape((shape[1], shape[2] * shape[3]))(cnn)
+    
+    # blstm = Bidirectional(LSTM(128, return_sequences=True, dropout=0.5))(blstm)
+    # blstm = Bidirectional(LSTM(128, return_sequences=True, dropout=0.5))(blstm)
+    # blstm = Bidirectional(LSTM(128, return_sequences=True, dropout=0.5))(blstm)
+
+    # output_data = Dense(units=d_model, activation="softmax")(blstm)
+
+    #EDITED MODEL WITH 2MILLION PARAM
     cnn = Conv2D(filters=16, kernel_size=(3,3), activation='relu', padding="same")(input_data)
     cnn = BatchNormalization(axis = -1)(cnn)
+
+    cnn = MaxPooling2D(pool_size=(2,2), strides=(2,2))(cnn)
 
     cnn = Conv2D(filters=16, kernel_size=(3,3), activation='relu', padding="same")(cnn)
     cnn = BatchNormalization(axis = -1)(cnn)
@@ -399,6 +440,8 @@ def cnn_bilstm(input_size, d_model):
     cnn = Conv2D(filters=32, kernel_size=(3,3),activation='relu', padding="same")(cnn)
     cnn = BatchNormalization(axis = -1)(cnn)
 
+    cnn = MaxPooling2D(pool_size=(2,2), strides=(2,2))(cnn)
+
     cnn = Conv2D(filters=32, kernel_size=(3,3),activation='relu', padding="same")(cnn)
     cnn = BatchNormalization(axis = -1)(cnn)
 
@@ -407,20 +450,13 @@ def cnn_bilstm(input_size, d_model):
     cnn = Conv2D(filters=64, kernel_size=(3,3),activation='relu', padding="same")(cnn)
     cnn = BatchNormalization(axis = -1)(cnn)
 
-    cnn = Conv2D(filters=64, kernel_size=(3,3),activation='relu', padding="same")(cnn)
-    cnn = BatchNormalization(axis = -1)(cnn)
-
-    cnn = Conv2D(filters=128, kernel_size=(3,3),activation='relu', padding="same")(cnn)
-    cnn = BatchNormalization(axis = -1)(cnn)
-
-    cnn = MaxPooling2D(pool_size=(2,1), strides=(2,1))(cnn)
+    cnn = MaxPooling2D(pool_size=(2,2), strides=(2,2))(cnn)
     
     shape = cnn.get_shape()
     blstm = Reshape((shape[1], shape[2] * shape[3]))(cnn)
     
-    blstm = Bidirectional(LSTM(128, return_sequences=True, dropout=0.5))(blstm)
-    blstm = Bidirectional(LSTM(128, return_sequences=True, dropout=0.5))(blstm)
-    blstm = Bidirectional(LSTM(128, return_sequences=True, dropout=0.5))(blstm)
+    blstm = Bidirectional(LSTM(256, return_sequences=True, dropout=0.5))(blstm)
+    blstm = Bidirectional(LSTM(256, return_sequences=True, dropout=0.5))(blstm)
 
     output_data = Dense(units=d_model, activation="softmax")(blstm)
 
