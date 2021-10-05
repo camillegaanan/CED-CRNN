@@ -144,11 +144,7 @@ class HTRModel:
         # define inputs, outputs and optimizer of the chosen architecture
         inputs, outputs = self.architecture(self.input_size, self.vocab_size + 1)
 
-        if learning_rate is None:
-            learning_rate = CustomSchedule(d_model=self.vocab_size + 1, initial_step=initial_step)
-            self.learning_schedule = True
-        else:
-            self.learning_schedule = False
+        self.learning_schedule = False
 
         optimizer = tf.keras.optimizers.RMSprop(learning_rate=learning_rate)
 
@@ -186,10 +182,6 @@ class HTRModel:
         :param: See tensorflow.keras.Model.fit()
         :return: A history object
         """
-
-        # remove ReduceLROnPlateau (if exist) when use schedule learning rate
-        if callbacks and self.learning_schedule:
-            callbacks = [x for x in callbacks if not isinstance(x, ReduceLROnPlateau)]
 
         out = self.model.fit(x=x, y=y, batch_size=batch_size, epochs=epochs, verbose=verbose,
                              callbacks=callbacks, validation_split=validation_split,
@@ -288,38 +280,6 @@ class HTRModel:
         loss = tf.reduce_mean(loss)
 
         return loss
-
-
-"""
-Custom Schedule
-
-Reference:
-    Ashish Vaswani and Noam Shazeer and Niki Parmar and Jakob Uszkoreit and
-    Llion Jones and Aidan N. Gomez and Lukasz Kaiser and Illia Polosukhin.
-    "Attention Is All You Need", 2017
-    arXiv, URL: https://arxiv.org/abs/1706.03762
-"""
-
-
-class CustomSchedule(tf.keras.optimizers.schedules.LearningRateSchedule):
-    """
-    Custom schedule of the learning rate with warmup_steps.
-    From original paper "Attention is all you need".
-    """
-
-    def __init__(self, d_model, initial_step=0, warmup_steps=4000):
-        super(CustomSchedule, self).__init__()
-
-        self.d_model = d_model
-        self.d_model = tf.cast(self.d_model, dtype="float32")
-        self.initial_step = initial_step
-        self.warmup_steps = warmup_steps
-
-    def __call__(self, step):
-        arg1 = tf.math.rsqrt(step + self.initial_step)
-        arg2 = step * (self.warmup_steps**-1.5)
-
-        return tf.math.rsqrt(self.d_model) * tf.math.minimum(arg1, arg2)
 
 
 """
@@ -426,25 +386,30 @@ def cnn_bilstm(input_size, d_model):
 
     # output_data = Dense(units=d_model, activation="softmax")(blstm)
 
-    #EDITED MODEL WITH 1MILLION PARAM
+    #EDITED MODEL WITH 2MILLION PARAM
     cnn = Conv2D(filters=16, kernel_size=(3,3), activation='relu', padding="same")(input_data)
     cnn = BatchNormalization(axis = -1)(cnn)
+    cnn = Dropout(rate=0.2)(cnn)
 
     cnn = Conv2D(filters=16, kernel_size=(3,3), activation='relu', padding="same")(cnn)
     cnn = BatchNormalization(axis = -1)(cnn)
+    cnn = Dropout(rate=0.2)(cnn)
 
     cnn = MaxPooling2D(pool_size=(2,2), strides=(2,2))(cnn)
 
     cnn = Conv2D(filters=32, kernel_size=(3,3), activation='relu', padding="same")(cnn)
     cnn = BatchNormalization(axis = -1)(cnn)
+    cnn = Dropout(rate=0.2)(cnn)
 
     cnn = Conv2D(filters=32, kernel_size=(3,3), activation='relu', padding="same")(cnn)
     cnn = BatchNormalization(axis = -1)(cnn)
+    cnn = Dropout(rate=0.2)(cnn)
 
     cnn = MaxPooling2D(pool_size=(2,2), strides=(2,2))(cnn)
 
     cnn = Conv2D(filters=64, kernel_size=(3,3), activation='relu', padding="same")(cnn)
     cnn = BatchNormalization(axis = -1)(cnn)
+    cnn = Dropout(rate=0.2)(cnn)
     
     cnn = MaxPooling2D(pool_size=(2,1), strides=(2,1))(cnn)
     
