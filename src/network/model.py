@@ -146,7 +146,7 @@ class HTRModel:
 
         self.learning_schedule = False
 
-        optimizer = tf.keras.optimizers.RMSprop(learning_rate=learning_rate)
+        optimizer = tf.keras.optimizers.Adam(learning_rate=learning_rate)
 
         # create and compile
         self.model = Model(inputs=inputs, outputs=outputs)
@@ -389,7 +389,7 @@ def cnn_bilstm(input_size, d_model):
     #EDITED MODEL WITH 2MILLION PARAM
     cnn = Conv2D(filters=16, kernel_size=(3,3), activation='relu', padding="same")(input_data)
     cnn = BatchNormalization(axis = -1)(cnn)
-    cnn = Dropout(rate=0.2)(cnn)
+    # cnn = Dropout(rate=0.2)(cnn)
 
     cnn = Conv2D(filters=16, kernel_size=(3,3), activation='relu', padding="same")(cnn)
     cnn = BatchNormalization(axis = -1)(cnn)
