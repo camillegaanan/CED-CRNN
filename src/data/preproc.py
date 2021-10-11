@@ -134,7 +134,12 @@ def preprocess(img, input_size):
     """Make the process with the `input_size` to the scale resize"""
    
     def imread(path):
-        img = cv2.imread(path, cv2.IMREAD_GRAYSCALE)
+        if path.find('Zialcita_Risperidone_1 CHECK.png') != -1:
+            img = cv2.imread('C:/Users/Camille/source/repos/CED-CRNN/raw/doctors/images/Zialcita_Risperidone_1 CHECK.png', cv2.IMREAD_GRAYSCALE)
+        elif path.find('Yenson_Prednisolone_3.png'):
+            img = cv2.imread('C:/Users/Camille/source/repos/CED-CRNN/raw/doctors/images/Yenson_Prednisolone_3.png', cv2.IMREAD_GRAYSCALE)
+        else:
+            img = cv2.imread(path, cv2.IMREAD_GRAYSCALE)
         u, i = np.unique(np.array(img).flatten(), return_inverse=True)
         background = int(u[np.argmax(np.bincount(i))])
         return img, background
@@ -154,7 +159,7 @@ def preprocess(img, input_size):
                 boundbox[i] = int(boundbox[i])
 
         img = np.asarray(img[boundbox[0]:boundbox[1], boundbox[2]:boundbox[3]], dtype=np.uint8)
-    # img = cv2.imread(img, cv2.IMREAD_GRAYSCALE)
+    
     img = binary(img)
     img = noise(img)
     img = cv2.blur(img,(3,3))
