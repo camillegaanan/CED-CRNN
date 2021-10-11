@@ -323,10 +323,6 @@ class Dataset():
             if split[1].find("CHECK") != -1:
                 split[0] = split[0] + ' ' + split[1]
                 split.pop(1)
-            if line.find("PayuranGatchalian_Lorazepam_3") != -1:
-                split[0] = split[0] + ' ' + split[1]
-                split.pop(1)
-                split.pop(2)
             if line.find("Ferraren_Quinine_3") != -1:
                 split[0] = split[0] + ' ' + split[1]
                 split.pop(1)
@@ -345,9 +341,7 @@ class Dataset():
     
         for i in self.partitions:
             for line in paths[i]:
-                # print(line)
                 if line.find(".txt") == -1:
-                    # print(gt_dict[line])
                     dataset[i]['dt'].append(os.path.join(img_path, f"{line}.png"))
                     dataset[i]['gt'].append(gt_dict[line])   
         return dataset
