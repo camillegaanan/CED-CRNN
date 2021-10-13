@@ -143,8 +143,8 @@ Ferraren_Prednisolone_1,Prednisolone
 Ferraren_Prednisolone_2,Prednisolone
 Ferraren_Prednisolone_3,Prednisolone
 Ferraren_Quinine_1,Quinine
-Ferraren_Quinine_2 ,Quinine
-Ferraren_Quinine_3 ,Quinine
+Ferraren_Quinine_2,Quinine
+Ferraren_Quinine_3,Quinine
 Ferraren_Risperidone_1,Risperidone
 Ferraren_Risperidone_2,Risperidone
 Ferraren_Risperidone_3,Risperidone
@@ -267,7 +267,7 @@ PayuranGatchalian_Hydroxyzine_2 CHECK,Hydroxyzine
 PayuranGatchalian_Hydroxyzine_3,Hydroxyzine
 PayuranGatchalian_Lorazepam_1 CHECK,Lorazepam
 PayuranGatchalian_Lorazepam_2 CHECK,Lorazepam
-PayuranGatchalian_Lorazepam_3 CHECK ,Lorazepam
+PayuranGatchalian_Lorazepam_3 CHECK,Lorazepam
 PayuranGatchalian_Metronidazole_1 CHECK,Metronidazole
 PayuranGatchalian_Metronidazole_2 CHECK,Metronidazole
 PayuranGatchalian_Metronidazole_3 CHECK,Metronidazole
