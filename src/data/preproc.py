@@ -136,8 +136,12 @@ def preprocess(img, input_size):
     def imread(path):
         if path.find('Zialcita_Risperidone_1 CHECK.png') != -1:
             img = cv2.imread('C:/Users/Camille/source/repos/CED-CRNN/raw/doctors/images/Zialcita_Risperidone_1 CHECK.png', cv2.IMREAD_GRAYSCALE)
-        elif path.find('Yenson_Prednisolone_3.png'):
+        elif path.find('Yenson_Prednisolone_3.png') != -1:
             img = cv2.imread('C:/Users/Camille/source/repos/CED-CRNN/raw/doctors/images/Yenson_Prednisolone_3.png', cv2.IMREAD_GRAYSCALE)
+        elif path.find('PayuranGatchalian_Dobutamine_1_0_0_2778.png') != -1:
+            img = cv2.imread('C:/Users/Camille/source/repos/CED-CRNN/raw/doctors/images/PayuranGatchalian_Dobutamine_1_0_0_2778.png', cv2.IMREAD_GRAYSCALE)
+        elif path.find('PayuranGatchalian_Azathioprine_3 CHECK_0_0_1447.png') != -1:
+            img = cv2.imread('C:/Users/Camille/source/repos/CED-CRNN/raw/doctors/images/PayuranGatchalian_Azathioprine_3 CHECK_0_0_1447.png', cv2.IMREAD_GRAYSCALE)
         else:
             img = cv2.imread(path, cv2.IMREAD_GRAYSCALE)
         u, i = np.unique(np.array(img).flatten(), return_inverse=True)
@@ -160,11 +164,12 @@ def preprocess(img, input_size):
 
         img = np.asarray(img[boundbox[0]:boundbox[1], boundbox[2]:boundbox[3]], dtype=np.uint8)
     
-    img = binary(img)
     img = noise(img)
+    img = binary(img)
+    # img = np.invert(img)
     img = cv2.blur(img,(3,3))
     img = ced(img)
-    img = skeleton(img)
+    # img = skeleton(img)
 
     wt, ht, _ = input_size
     h, w = np.asarray(img).shape

@@ -324,11 +324,11 @@ class Dataset():
                 split[0] = split[0] + ' ' + split[1]
                 split.pop(1)
             if line.find("Ferraren_Quinine_3") != -1:
-                split[0] = split[0] + ' ' + split[1]
-                split.pop(1)
+                split[0] = split[0] #+ ' ' + split[1]
+                #split.pop(1)
             if line.find("Ferraren_Quinine_2") != -1:
-                split[0] = split[0] + ' ' + split[1]
-                split.pop(1)
+                split[0] = split[0] #+ ' ' + split[1]
+                #split.pop(1)
             if line.find("Lim_Chlorpromazine_1") != -1:
                 split[0] = split[0][0:20] + '  ' + split[0][21:35]
             gt_dict[split[0]] = ''
