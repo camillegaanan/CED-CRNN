@@ -8,6 +8,7 @@ import string
 import unicodedata
 import editdistance
 import numpy as np
+import os
 # from numpy.lib.function_base import average
 # from sklearn.metrics import precision_score, recall_score, f1_score, accuracy_score
 # from scipy.stats import shapiro
@@ -15,7 +16,7 @@ import numpy as np
 import csv
 
 
-def ocr_metrics(predicts, ground_truth, norm_accentuation=False, norm_punctuation=False):
+def ocr_metrics(predicts, ground_truth, output_path, norm_accentuation=False, norm_punctuation=False):
     """Calculate Character Error Rate (CER), Word Error Rate (WER) and Sequence Error Rate (SER)"""
 
     if len(predicts) == 0 or len(ground_truth) == 0:
@@ -26,9 +27,10 @@ def ocr_metrics(predicts, ground_truth, norm_accentuation=False, norm_punctuatio
     num_of_expected_words = 0
     acc = 0
     word_dict = {}
+    word_dict2 = {}
 
     for (pd, gt) in zip(predicts, ground_truth):
-        # pd, gt = pd.lower(), gt.lower()
+        pd, gt = pd.lower(), gt.lower()
 
         if norm_accentuation:
             pd = unicodedata.normalize("NFKD", pd).encode("ASCII", "ignore").decode("ASCII")
@@ -56,17 +58,29 @@ def ocr_metrics(predicts, ground_truth, norm_accentuation=False, norm_punctuatio
                     word_dict[word] += 1
                 else:
                     word_dict[word] = 1
+            else:
+                if word in word_dict2:
+                    word_dict2[word] += 1
+                else:
+                    word_dict2[word] = 1
 
         num_of_expected_words += len(gt_wer)
         num_of_recognized_words += len(pd_wer)
 
         
     word_dict = sorted(word_dict.items(), key=lambda x: x[1], reverse=True)
+    word_dict2 = sorted(word_dict2.items(), key=lambda x: x[1], reverse=True)
 
-    with open("misclassified_words.csv", 'w', newline='') as file:
+    with open(os.path.join(output_path, "misclassified_words.csv"), 'w', newline='') as file:
         writer = csv.writer(file)
         writer.writerow(["word", "count"])
         for i in word_dict:
+            writer.writerow([i[0], i[1]])
+
+    with open(os.path.join(output_path, "classified_words.csv"), 'w', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow(["word", "count"])
+        for i in word_dict2:
             writer.writerow([i[0], i[1]])
     
 
@@ -81,24 +95,15 @@ def ocr_metrics(predicts, ground_truth, norm_accentuation=False, norm_punctuatio
     metrics = np.append(metrics,recall)
     metrics = np.append(metrics,precision)
     metrics = np.append(metrics,f1)
-    # metrics = np.append(metrics,precision_macro)
-    # metrics = np.append(metrics,precision_micro)
-    # metrics = np.append(metrics,precision_weighted)
-    # metrics = np.append(metrics,recall_macro)
-    # metrics = np.append(metrics,recall_micro)
-    # metrics = np.append(metrics,recall_weighted)
-    # metrics = np.append(metrics,f1_macro)
-    # metrics = np.append(metrics,f1_micro)                                                                                                                                                          
-    # metrics = np.append(metrics,f1_weighted)
 
-    return word_dict, cer, metrics
+    return cer, metrics
 
 
 # ground = ['Prednisolone: 5-60 mg per day qds', 'Dobutamine: 2.5-15 mcg/kg/min', 'Tramadol: 50-100 mg as needed every 4 to 6 hours', 'Azathioprine: 3-5 mg/kg Per os OD', 'Dobutamine: 2.5-15 mcg/kg/min']
 # pred = ['Cetrimaone: 0-5 mg Per s qas','Cetrimaone: 0-5 mg Per s qas','Cetrimaone: 0-5 mg Per s qas','Cetrimaone: 0-5 mg Per s qas','Cetrimaone: 0-5 mg Per s qas']
 
 
-# _,cer, m =ocr_metrics(predicts=pred, ground_truth=ground)
+# cer, m =ocr_metrics(predicts=pred, ground_truth=ground, output_path='../../output/doctors/fajardo/')
 # print(m[2])
 # print(m[3])
 # print(m[4])
