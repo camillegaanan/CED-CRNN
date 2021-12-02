@@ -1,13 +1,4 @@
-"""Handwritten Text Recognition Neural Network"""
-
 import os
-import logging
-
-try:
-    os.environ['TF_CPP_MIN_LOG_LEVEL'] = "3"
-    logging.disable(logging.WARNING)
-except AttributeError:
-    pass
 
 import numpy as np
 import tensorflow as tf
@@ -16,30 +7,12 @@ from contextlib import redirect_stdout
 from tensorflow.keras import backend as K
 from tensorflow.keras import Model
 
-from tensorflow.keras.callbacks import CSVLogger, TensorBoard, ModelCheckpoint
+from tensorflow.keras.callbacks import CSVLogger, ModelCheckpoint
 from tensorflow.keras.callbacks import EarlyStopping, ReduceLROnPlateau
-from tensorflow.keras.constraints import MaxNorm
 
-from network.layers import FullGatedConv2D, GatedConv2D, OctConv2D
-from tensorflow.keras.layers import Conv2D, Bidirectional, LSTM, GRU, Dense
-from tensorflow.keras.layers import Dropout, BatchNormalization, LeakyReLU, PReLU, ReLU
-from tensorflow.keras.layers import Input, Add, Activation, Lambda, MaxPooling2D, Reshape
-
-
-"""
-HTRModel Class based on:
-    Y. Soullard, C. Ruffino and T. Paquet,
-    CTCModel: A Connectionnist Temporal Classification implementation for Keras.
-    ee: https://arxiv.org/abs/1901.07957, 2019.
-    github: https://github.com/ysoullard/HTRModel
-
-
-The HTRModel class use Tensorflow 2 Keras module for the use of the
-Connectionist Temporal Classification (CTC) with the Hadwritten Text Recognition (HTR).
-
-In a Tensorflow Keras Model, x is the input features and y the labels.
-"""
-
+from tensorflow.keras.layers import Conv2D, Bidirectional, LSTM, Dense
+from tensorflow.keras.layers import Dropout, BatchNormalization
+from tensorflow.keras.layers import Input, Activation, MaxPooling2D, Reshape
 
 class HTRModel:
 
@@ -53,14 +26,6 @@ class HTRModel:
                  stop_tolerance=20,
                  reduce_tolerance=15,
                  cooldown=0):
-        """
-        Initialization of a HTR Model.
-
-        :param
-            architecture: option of the architecture model to build and compile
-            greedy, beam_width, top_paths: Parameters of the CTC decoding
-            (see ctc decoding tensorflow for more details)
-        """
 
         self.architecture = globals()[architecture]
         self.input_size = input_size
@@ -76,7 +41,6 @@ class HTRModel:
         self.cooldown = cooldown
 
     def summary(self, output=None, target=None):
-        """Show/Save model structure (summary)"""
 
         self.model.summary()
 
@@ -88,7 +52,6 @@ class HTRModel:
                     self.model.summary()
 
     def load_checkpoint(self, target):
-        """ Load a model with checkpoint file"""
 
         if os.path.isfile(target):
             if self.model is None:
@@ -97,20 +60,12 @@ class HTRModel:
             self.model.load_weights(target)
 
     def get_callbacks(self, logdir, checkpoint, monitor="val_loss", verbose=0):
-        """Setup the list of callbacks for the model"""
 
         callbacks = [
             CSVLogger(
                 filename=os.path.join(logdir, "epochs.log"),
                 separator=";",
                 append=True),
-            TensorBoard(
-                log_dir=logdir,
-                histogram_freq=10,
-                profile_batch=0,
-                write_graph=True,
-                write_images=False,
-                update_freq="epoch"),
             ModelCheckpoint(
                 filepath=checkpoint,
                 monitor=monitor,
@@ -135,23 +90,12 @@ class HTRModel:
         return callbacks
 
     def compile(self, learning_rate=None, initial_step=0, target=None, output=None):
-        """
-        Configures the HTR Model for training/predict.
-
-        :param optimizer: optimizer for training
-        """
-
-        # define inputs, outputs and optimizer of the chosen architecture
         inputs, outputs = self.architecture(self.input_size, self.vocab_size + 1)
-
-        self.learning_schedule = False
 
         optimizer = tf.keras.optimizers.Adam(learning_rate=learning_rate)
 
-        # create and compile
         self.model = Model(inputs=inputs, outputs=outputs)
         self.model.compile(optimizer=optimizer, loss=self.ctc_loss_lambda_func)
-        # tf.keras.utils.plot_model(self.model, to_file=os.path.join(output, target), show_shapes=True)
 
     def fit(self,
             x=None,
@@ -173,15 +117,6 @@ class HTRModel:
             workers=1,
             use_multiprocessing=False,
             **kwargs):
-        """
-        Model training on data yielded (fit function has support to generator).
-        A fit() abstration function of TensorFlow 2.
-
-        Provide x parameter of the form: yielding (x, y, sample_weight).
-
-        :param: See tensorflow.keras.Model.fit()
-        :return: A history object
-        """
 
         out = self.model.fit(x=x, y=y, batch_size=batch_size, epochs=epochs, verbose=verbose,
                              callbacks=callbacks, validation_split=validation_split,
@@ -203,15 +138,6 @@ class HTRModel:
                 workers=1,
                 use_multiprocessing=False,
                 ctc_decode=True):
-        """
-        Model predicting on data yielded (predict function has support to generator).
-        A predict() abstration function of TensorFlow 2.
-
-        Provide x parameter of the form: yielding [x].
-
-        :param: See tensorflow.keras.Model.predict()
-        :return: raw data on `ctc_decode=False` or CTC decode on `ctc_decode=True` (both with probabilities)
-        """
 
         if verbose == 1:
             print("Model Predict")
@@ -281,122 +207,11 @@ class HTRModel:
 
         return loss
 
-
-"""
-Networks to the Handwritten Text Recognition Model
-
-Reference:
-    Moysset, B. and Messina, R.:
-    Are 2D-LSTM really dead for offline text recognition?
-    In: International Journal on Document Analysis and Recognition (IJDAR)
-    Springer Science and Business Media LLC
-    URL: http://dx.doi.org/10.1007/s10032-019-00325-0
-"""
-
-def flor(input_size, d_model):
-    """
-    Gated Convolucional Recurrent Neural Network by Flor et al.
-    """
-
-    input_data = Input(name="input", shape=input_size)
-
-    cnn = Conv2D(filters=16, kernel_size=(3, 3), strides=(2, 2), padding="same", kernel_initializer="he_uniform")(input_data)
-    cnn = PReLU(shared_axes=[1, 2])(cnn)
-    cnn = BatchNormalization(renorm=True)(cnn)
-    cnn = FullGatedConv2D(filters=16, kernel_size=(3, 3), padding="same")(cnn)
-
-    cnn = Conv2D(filters=32, kernel_size=(3, 3), strides=(1, 1), padding="same", kernel_initializer="he_uniform")(cnn)
-    cnn = PReLU(shared_axes=[1, 2])(cnn)
-    cnn = BatchNormalization(renorm=True)(cnn)
-    cnn = FullGatedConv2D(filters=32, kernel_size=(3, 3), padding="same")(cnn)
-
-    cnn = Conv2D(filters=40, kernel_size=(2, 4), strides=(2, 4), padding="same", kernel_initializer="he_uniform")(cnn)
-    cnn = PReLU(shared_axes=[1, 2])(cnn)
-    cnn = BatchNormalization(renorm=True)(cnn)
-    cnn = FullGatedConv2D(filters=40, kernel_size=(3, 3), padding="same", kernel_constraint=MaxNorm(4, [0, 1, 2]))(cnn)
-    cnn = Dropout(rate=0.2)(cnn)
-
-    cnn = Conv2D(filters=48, kernel_size=(3, 3), strides=(1, 1), padding="same", kernel_initializer="he_uniform")(cnn)
-    cnn = PReLU(shared_axes=[1, 2])(cnn)
-    cnn = BatchNormalization(renorm=True)(cnn)
-    cnn = FullGatedConv2D(filters=48, kernel_size=(3, 3), padding="same", kernel_constraint=MaxNorm(4, [0, 1, 2]))(cnn)
-    cnn = Dropout(rate=0.2)(cnn)
-
-    cnn = Conv2D(filters=56, kernel_size=(2, 4), strides=(2, 4), padding="same", kernel_initializer="he_uniform")(cnn)
-    cnn = PReLU(shared_axes=[1, 2])(cnn)
-    cnn = BatchNormalization(renorm=True)(cnn)
-    cnn = FullGatedConv2D(filters=56, kernel_size=(3, 3), padding="same", kernel_constraint=MaxNorm(4, [0, 1, 2]))(cnn)
-    cnn = Dropout(rate=0.2)(cnn)
-
-    cnn = Conv2D(filters=64, kernel_size=(3, 3), strides=(1, 1), padding="same", kernel_initializer="he_uniform")(cnn)
-    cnn = PReLU(shared_axes=[1, 2])(cnn)
-    cnn = BatchNormalization(renorm=True)(cnn)
-
-    cnn = MaxPooling2D(pool_size=(1, 2), strides=(1, 2), padding="valid")(cnn)
-
-    shape = cnn.get_shape()
-    bgru = Reshape((shape[1], shape[2] * shape[3]))(cnn)
-
-    bgru = Bidirectional(GRU(units=128, return_sequences=True, dropout=0.5))(bgru)
-    bgru = Dense(units=256)(bgru)
-
-    bgru = Bidirectional(GRU(units=128, return_sequences=True, dropout=0.5))(bgru)
-    output_data = Dense(units=d_model, activation="softmax")(bgru)
-
-    return (input_data, output_data)
-
 def cnn_bilstm(input_size, d_model):
-    """proposed model"""
     input_data = Input(name="input", shape=input_size)
     
-    #proposed model4
-    # cnn = Conv2D(filters=16, kernel_size=(3,3), padding="same")(input_data)
-    # cnn = BatchNormalization(axis = -1)(cnn)
-    # cnn = Activation("relu")(cnn)
-
-    # cnn = Conv2D(filters=16, kernel_size=(3,3), padding="same")(cnn)
-    # cnn = BatchNormalization(axis = -1)(cnn)
-    # cnn = Activation("relu")(cnn)
-
-    # cnn = MaxPooling2D(pool_size=(2,2), strides=(2,2))(cnn)
-
-    # cnn = Conv2D(filters=32, kernel_size=(3,3), padding="same")(cnn)
-    # cnn = BatchNormalization(axis = -1)(cnn)
-    # cnn = Activation("relu")(cnn)
-
-    # cnn = Conv2D(filters=32, kernel_size=(3,3), padding="same")(cnn)
-    # cnn = BatchNormalization(axis = -1)(cnn)
-    # cnn = Activation("relu")(cnn)
-
-    # cnn = MaxPooling2D(pool_size=(2,2), strides=(2,2))(cnn)
-
-    # cnn = Conv2D(filters=64, kernel_size=(3,3), padding="same")(cnn)
-    # cnn = BatchNormalization(axis = -1)(cnn)
-    # cnn = Activation("relu")(cnn)
-
-    # cnn = Conv2D(filters=128, kernel_size=(3,3), padding="same")(cnn)
-    # cnn = BatchNormalization(axis = -1)(cnn)
-    # cnn = Activation("relu")(cnn)
-
-    # cnn = Conv2D(filters=128, kernel_size=(3,3), padding="same")(cnn)
-    # cnn = BatchNormalization(axis = -1)(cnn)
-    # cnn = Activation("relu")(cnn)
-
-    # cnn = MaxPooling2D(pool_size=(2,2), strides=(2,2))(cnn)
-    
-    # shape = cnn.get_shape()
-    # blstm = Reshape((shape[1], shape[2] * shape[3]))(cnn)
-    
-    # blstm = Bidirectional(LSTM(128, return_sequences=True, dropout=0.25))(blstm)
-    # blstm = Bidirectional(LSTM(128, return_sequences=True, dropout=0.25))(blstm)
-    # blstm = Bidirectional(LSTM(128, return_sequences=True, dropout=0.25))(blstm)
-
-    # output_data = Dense(units=d_model, activation="softmax")(blstm)
-
-    #simpler model
     cnn = Conv2D(filters=16, kernel_size=(3,3), activation='relu', padding="same")(input_data)
     cnn = BatchNormalization(axis = -1)(cnn)
-    # cnn = Dropout(rate=0.2)(cnn)
 
     cnn = Conv2D(filters=16, kernel_size=(3,3), activation='relu', padding="same")(cnn)
     cnn = BatchNormalization(axis = -1)(cnn)
@@ -431,7 +246,6 @@ def cnn_bilstm(input_size, d_model):
     return (input_data, output_data)
 
 def fajardo(input_size, d_model):
-    """fajardo model"""
     input_data = Input(name="input", shape=input_size)
     
     cnn = Conv2D(filters=16, kernel_size=(3,3), padding="same")(input_data)
