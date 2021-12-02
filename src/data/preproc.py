@@ -1,20 +1,6 @@
-"""
-Data preproc functions:
-    adjust_to_see: adjust image to better visualize (rotate and transpose)
-    augmentation: apply variations to a list of images
-    normalization: apply normalization and variations on images (if required)
-    preprocess: main function for preprocess
-    text_standardize: preprocess and standardize sentence
-"""
-
-import re
-import os
 import cv2
-import html
-import string
 import numpy as np
 from scipy import signal
-
 
 def skeleton(image):
     return cv2.ximgproc.thinning(image)
@@ -38,7 +24,6 @@ def ced(image):
         list_e.append(np.abs(imgk))
         out = imgk.astype(np.uint8)
         count += 1
-    #Seeking maximum
     count
     e = list_e[0]
     for i in range(len(list_e)):
@@ -59,7 +44,6 @@ def noise(bw):
     return den
 
 def adjust_to_see(img):
-    """Rotate and transpose to image visualize (cv2 method or jupyter notebook)"""
 
     (h, w) = img.shape[:2]
     (cX, cY) = (w // 2, h // 2)
@@ -87,7 +71,6 @@ def augmentation(imgs,
                  width_shift_range=0,
                  dilate_range=1,
                  erode_range=1):
-    """Apply variations to a list of images (rotate, width and height shift, scale, erode, dilate)"""
 
     imgs = imgs.astype(np.float32)
     _, h, w = imgs.shape
@@ -115,7 +98,6 @@ def augmentation(imgs,
 
 
 def normalization(imgs):
-    """Normalize list of images"""
 
     imgs = np.asarray(imgs).astype(np.float32)
     imgs = np.expand_dims(imgs / 255, axis=-1)
@@ -131,7 +113,6 @@ Preprocess metodology based in:
 
 
 def preprocess(img, input_size):
-    """Make the process with the `input_size` to the scale resize"""
    
     def imread(path):
         if path.find('Zialcita_Risperidone_1 CHECK.png') != -1:
@@ -164,7 +145,7 @@ def preprocess(img, input_size):
 
         img = np.asarray(img[boundbox[0]:boundbox[1], boundbox[2]:boundbox[3]], dtype=np.uint8)
     
-    img = noise(img)
+    # img = noise(img)
     img = binary(img)
     # img = np.invert(img)
     img = cv2.blur(img,(3,3))
@@ -183,94 +164,3 @@ def preprocess(img, input_size):
     img = cv2.transpose(target)
 
     return img
-
-
-"""
-DeepSpell based text cleaning process.
-    Tal Weiss.
-    Deep Spelling.
-    Medium: https://machinelearnings.co/deep-spelling-9ffef96a24f6#.2c9pu8nlm
-    Github: https://github.com/MajorTal/DeepSpell
-"""
-
-RE_DASH_FILTER = re.compile(r'[\-\˗\֊\‐\‑\‒\–\—\⁻\₋\−\﹣\－]', re.UNICODE)
-RE_APOSTROPHE_FILTER = re.compile(r'&#39;|[ʼ՚＇‘’‛❛❜ߴߵ`‵´ˊˋ{}{}{}{}{}{}{}{}{}]'.format(
-    chr(768), chr(769), chr(832), chr(833), chr(2387),
-    chr(5151), chr(5152), chr(65344), chr(8242)), re.UNICODE)
-RE_RESERVED_CHAR_FILTER = re.compile(r'[¶¤«»]', re.UNICODE)
-RE_LEFT_PARENTH_FILTER = re.compile(r'[\(\[\{\⁽\₍\❨\❪\﹙\（]', re.UNICODE)
-RE_RIGHT_PARENTH_FILTER = re.compile(r'[\)\]\}\⁾\₎\❩\❫\﹚\）]', re.UNICODE)
-RE_BASIC_CLEANER = re.compile(r'[^\w\s{}]'.format(re.escape(string.punctuation)), re.UNICODE)
-
-LEFT_PUNCTUATION_FILTER = """!%&),.:;<=>?@\\]^_`|}~"""
-RIGHT_PUNCTUATION_FILTER = """"(/<=>@[\\^_`{|~"""
-NORMALIZE_WHITESPACE_REGEX = re.compile(r'[^\S\n]+', re.UNICODE)
-
-
-def text_standardize(text):
-    """Organize/add spaces around punctuation marks"""
-
-    if text is None:
-        return ""
-
-    text = html.unescape(text).replace("\\n", "").replace("\\t", "")
-
-    text = RE_RESERVED_CHAR_FILTER.sub("", text)
-    text = RE_DASH_FILTER.sub("-", text)
-    text = RE_APOSTROPHE_FILTER.sub("'", text)
-    text = RE_LEFT_PARENTH_FILTER.sub("(", text)
-    text = RE_RIGHT_PARENTH_FILTER.sub(")", text)
-    text = RE_BASIC_CLEANER.sub("", text)
-
-    text = text.lstrip(LEFT_PUNCTUATION_FILTER)
-    text = text.rstrip(RIGHT_PUNCTUATION_FILTER)
-    text = text.translate(str.maketrans({c: f" {c} " for c in string.punctuation}))
-    text = NORMALIZE_WHITESPACE_REGEX.sub(" ", text.strip())
-
-    return text
-
-
-def generate_kaldi_assets(output_path, dtgen, predicts):
-    from kaldiio import WriteHelper
-
-    # get data and ground truth lists
-    ctc_TK, space_TK, ground_truth = "<ctc>", "<space>", []
-
-    for pt in ['train', 'valid', 'test']:
-        for x in dtgen.dataset[pt]['gt']:
-            ground_truth.append([space_TK if y == " " else y for y in list(f" {x} ")])
-
-    # define dataset size and default tokens
-    ds_size = dtgen.size['train'] + dtgen.size['valid'] + dtgen.size['test']
-
-    # get chars list and save with the ctc and space tokens
-    chars = list(dtgen.tokenizer.chars) + [ctc_TK]
-    chars[chars.index(" ")] = space_TK
-
-    kaldi_path = os.path.join(output_path, "kaldi")
-    os.makedirs(kaldi_path, exist_ok=True)
-
-    with open(os.path.join(kaldi_path, "chars.lst"), "w") as lg:
-        lg.write("\n".join(chars))
-
-    ark_file_name = os.path.join(kaldi_path, "conf_mats.ark")
-    scp_file_name = os.path.join(kaldi_path, "conf_mats.scp")
-
-    # save ark and scp file (laia output/kaldi input format)
-    with WriteHelper(f"ark,scp:{ark_file_name},{scp_file_name}") as writer:
-        for i, item in enumerate(predicts):
-            writer(str(i + ds_size), item)
-
-    # save ground_truth.lst file with sparse sentences
-    with open(os.path.join(kaldi_path, "ground_truth.lst"), "w") as lg:
-        for i, item in enumerate(ground_truth):
-            lg.write(f"{i} {' '.join(item)}\n")
-
-    # save indexes of the train/valid and test partitions
-    with open(os.path.join(kaldi_path, "ID_train.lst"), "w") as lg:
-        range_index = [str(i) for i in range(0, ds_size - dtgen.size['test'])]
-        lg.write("\n".join(range_index))
-
-    with open(os.path.join(kaldi_path, "ID_test.lst"), "w") as lg:
-        range_index = [str(i) for i in range(ds_size - dtgen.size['test'], ds_size)]
-        lg.write("\n".join(range_index))

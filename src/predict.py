@@ -9,7 +9,7 @@ import cv2
 from data import evaluation
 import string
 
-arch = "cnn_bilstm"
+arch = "fajardo"
 source = "doctors"
 
 source_path = os.path.join("..", "data", f"{source}.hdf5")
@@ -21,6 +21,7 @@ max_text_length = 128
 input_size = (1024, 128, 1)
 # uploaded = files.upload()
 filename = 'C:/Users/Camille/source/repos/CED-CRNN/raw/doctors/images/Yopo_Tramadol_1.png'
+filename = 'C:/Users/Camille/Downloads/Metronidazole.jpg'
 
 tokenizer = Tokenizer(chars=charset_base, max_text_length=max_text_length)
 
