@@ -25,7 +25,7 @@ On localhost:
     ├── main.py   
     ├── network  
     │   ├── model.py  
-    └── tutorial.ipynb  
+    └── main.ipynb  
 
 In DataAugmentation.ipynb, change the strings of `src`, `parent`, and `aug_dir` such that:  
     - src = location of the extracted files from `dataset.zip`.  
