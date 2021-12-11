@@ -4,14 +4,12 @@ Handwritten Text Recognition (HTR) system implemented using Tensorflow and train
 
 ## Preparation of System:
 On localhost:
-- Download the zip file `dataset.zip`, `main.zip`, and `flask-1.zip` and extract all in your preferred location. 
-- Your project directory for the will be like this for the extracted files from `main.zip`:
+- Download the zip file `dataset.zip`, `CED-CRNN.zip`, and `flask-1.zip` and extract all in your preferred location. 
+- Your project directory for the will be like this for the extracted files from `CED-CRNN.zip`:
   
 .  
-├── .venv  
-│  
-├── data  
-│  
+├── .venv   
+├── data   
 ├── raw  
 │   ├── doctors  
 │   │   ├── images  
@@ -23,10 +21,10 @@ On localhost:
     │   ├── evaluation.py  
     │   ├── generator.py  
     │   ├── preproc.py   
-    │   └── reader.py  
-    ├── main.py   
+    │   └── reader.py   
     ├── network  
     │   └── model.py  
+    ├── main.py
     └── main.ipynb  
 
 In DataAugmentation.ipynb, change the strings of `src`, `parent`, and `aug_dir` such that:  
@@ -36,7 +34,7 @@ In DataAugmentation.ipynb, change the strings of `src`, `parent`, and `aug_dir` 
 
 Run the first and only cell in DataAugmentation.ipynb. This will create two new csv files named `data.csv` and `train_aug.csv` under the  same hierarchy of the notebook. Three text files named `train.txt`,`val.txt`, and `test.txt` will also be created under raw > doctors > split.
 
-On your command line, navigate to the location where you extracted `main.zip`. 
+On your command line, navigate to the location where you extracted `CED-CRNN.zip`. 
 
 After that, open the virtual environment with:  
 `.venv\Scripts\activate`    
@@ -59,22 +57,14 @@ On localhost, your project directory will be like this for the extracted `flask-
 
 .  
 ├── env   
-│  
 ├── static   
-│     
 ├── templates    
 │   └── home.html    
-│    
-├── cabais_noNoiseSkeleton.hdf5  
-│  
-├── crnn_ced  
-│  
-├── generator.py  
-│  
-├── loadModel.py  
-│  
-├── model.py  
-│  
+├── cabais_noNoiseSkeleton.hdf5   
+├── crnn_ced   
+├── generator.py   
+├── loadModel.py   
+├── model.py   
 └── preproc.py 
 
 In loadModel.py, change the target_path in line 9 such that it will be the location of cabais_noNoiseSkeleton.hdf5 in your directory. 
@@ -89,3 +79,6 @@ After that, open the virtual environment with:
 And run the command `python crnn_ced.py`. If no module found error occurred, install the packages while the virtual environment is still activated using the `pip install` command.
 
 This will generate a link in your command line. Follow that link to run the GUI of the system.
+
+## Acknowledgement
+This software is based on the public repository of [Arthur Flôr](https://github.com/arthurflor23/handwritten-text-recognition).
