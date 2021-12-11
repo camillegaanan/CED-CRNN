@@ -1,9 +1,9 @@
 import cv2
 import numpy as np
 from scipy import signal
+import re
+import html, string
 
-def skeleton(image):
-    return cv2.ximgproc.thinning(image)
 
 def ced(image):
     m1 = np.array([[5, 5, 5],[-3,0,-3],[-3,-3,-3]])
@@ -38,10 +38,6 @@ def binary(image):
     thresh = 127
     im_bw = cv2.threshold(image, thresh, 255, cv2.THRESH_BINARY)[1]
     return im_bw
-
-def noise(bw):
-    den = cv2.fastNlMeansDenoising(bw, None, 10, 7, 15)
-    return den
 
 def adjust_to_see(img):
 
@@ -104,14 +100,6 @@ def normalization(imgs):
     return imgs
 
 
-"""
-Preprocess metodology based in:
-    H. Scheidl, S. Fiel and R. Sablatnig,
-    Word Beam Search: A Connectionist Temporal Classification Decoding Algorithm, in
-    16th International Conference on Frontiers in Handwriting Recognition, pp. 256-258, 2018.
-"""
-
-
 def preprocess(img, input_size):
    
     def imread(path):
@@ -145,12 +133,9 @@ def preprocess(img, input_size):
 
         img = np.asarray(img[boundbox[0]:boundbox[1], boundbox[2]:boundbox[3]], dtype=np.uint8)
     
-    # img = noise(img)
     img = binary(img)
-    # img = np.invert(img)
     img = cv2.blur(img,(3,3))
     img = ced(img)
-    # img = skeleton(img)
 
     wt, ht, _ = input_size
     h, w = np.asarray(img).shape
@@ -164,3 +149,40 @@ def preprocess(img, input_size):
     img = cv2.transpose(target)
 
     return img
+
+
+RE_DASH_FILTER = re.compile(r'[\-\˗\֊\‐\‑\‒\–\—\⁻\₋\−\﹣\－]', re.UNICODE)
+RE_APOSTROPHE_FILTER = re.compile(r'&#39;|[ʼ՚＇‘’‛❛❜ߴߵ`‵´ˊˋ{}{}{}{}{}{}{}{}{}]'.format(
+    chr(768), chr(769), chr(832), chr(833), chr(2387),
+    chr(5151), chr(5152), chr(65344), chr(8242)), re.UNICODE)
+RE_RESERVED_CHAR_FILTER = re.compile(r'[¶¤«»]', re.UNICODE)
+RE_LEFT_PARENTH_FILTER = re.compile(r'[\(\[\{\⁽\₍\❨\❪\﹙\（]', re.UNICODE)
+RE_RIGHT_PARENTH_FILTER = re.compile(r'[\)\]\}\⁾\₎\❩\❫\﹚\）]', re.UNICODE)
+RE_BASIC_CLEANER = re.compile(r'[^\w\s{}]'.format(re.escape(string.punctuation)), re.UNICODE)
+
+LEFT_PUNCTUATION_FILTER = """!%&),.:;<=>?@\\]^_`|}~"""
+RIGHT_PUNCTUATION_FILTER = """"(/<=>@[\\^_`{|~"""
+NORMALIZE_WHITESPACE_REGEX = re.compile(r'[^\S\n]+', re.UNICODE)
+
+
+def text_standardize(text):
+    """Organize/add spaces around punctuation marks"""
+
+    if text is None:
+        return ""
+
+    text = html.unescape(text).replace("\\n", "").replace("\\t", "")
+
+    text = RE_RESERVED_CHAR_FILTER.sub("", text)
+    text = RE_DASH_FILTER.sub("-", text)
+    text = RE_APOSTROPHE_FILTER.sub("'", text)
+    text = RE_LEFT_PARENTH_FILTER.sub("(", text)
+    text = RE_RIGHT_PARENTH_FILTER.sub(")", text)
+    text = RE_BASIC_CLEANER.sub("", text)
+
+    text = text.lstrip(LEFT_PUNCTUATION_FILTER)
+    text = text.rstrip(RIGHT_PUNCTUATION_FILTER)
+    text = text.translate(str.maketrans({c: f" {c} " for c in string.punctuation}))
+    text = NORMALIZE_WHITESPACE_REGEX.sub(" ", text.strip())
+
+    return text
