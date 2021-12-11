@@ -6,38 +6,39 @@ Handwritten Text Recognition (HTR) system implemented using Tensorflow and train
 On localhost:
 - Download the zip file `dataset.zip` and `main.zip` and extract all in your preferred location. 
 - Download the zip file `main.zip` and extract all in your preferred location. Your project directory for the will be like this:
-.
-├── data
-│
-├── raw
-│   ├── doctors
-│   │   ├── images
-│   │   ├── label
-│   │   ├── split
-└── src
-    ├── data
-    │   ├──DataAugmentation.ipynb
-    │   ├── evaluation.py
-    │   ├── generator.py
-    │   ├── preproc.py
-    │   ├── reader.py
-    ├── main.py
-    ├── network
-    │   ├── model.py
-    └── tutorial.ipynb
+  
+.  
+├── data  
+│  
+├── raw  
+│   ├── doctors  
+│   │   ├── images  
+│   │   ├── label  
+│   │   ├── split  
+└── src  
+    ├── data  
+    │   ├──DataAugmentation.ipynb  
+    │   ├── evaluation.py  
+    │   ├── generator.py  
+    │   ├── preproc.py   
+    │   ├── reader.py  
+    ├── main.py   
+    ├── network  
+    │   ├── model.py  
+    └── tutorial.ipynb  
 
-In DataAugmentation.ipynb, change the strings of `src`, `parent`, and `aug_dir` such that:
-    - src = location of the extracted files from `dataset.zip`.
-    - parent = location of the raw > doctors > images subfolder. Take note that the string has an addition `/` at the end.
-    - train_aug = location of an empty folder that will contain the augmented training images later on.
+In DataAugmentation.ipynb, change the strings of `src`, `parent`, and `aug_dir` such that:  
+    - src = location of the extracted files from `dataset.zip`.  
+    - parent = location of the raw > doctors > images subfolder. Take note that the string has an addition `/` at the end.  
+    - train_aug = location of an empty folder that will contain the augmented training images later on.  
 
 Run the first and only cell in DataAugmentation.ipynb. This will create two new csv files named `data.csv` and `train_aug.csv` under the  same hierarchy of the notebook. Three text files named `train.txt`,`val.txt`, and `test.txt` will also be created under raw > doctors > split.
 
 On your command line, navigate to the location where you extracted `main.zip`. 
 
-After that, create virtual environment and install the dependencies with python 3 and pip:
-`python -m venv .venv && .venv\Scripts\activate`
-`pip install -r requirements.txt`
+After that, create virtual environment and install the dependencies with python 3 and pip:  
+`python -m venv .venv && .venv\Scripts\activate`  
+`pip install -r requirements.txt`  
 
 Go to `src` and run `python main.py --source=doctors --transform` to create the hdf5 file containing the images and their corresponding groud truth.
 
