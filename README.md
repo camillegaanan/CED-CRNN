@@ -1,65 +1,53 @@
-Process:
-1. Pull changes from main branch.<br>
-	-NOTE: check src > network > model.py > def cnn_bilstm<br>
-	-if gusto mo nung og model na 5min param, comment out na lng yung nasa baba na for the simpler model.<br>
-	-vice versa if gusto mo uis yung simpler model<br>
-2. add an empty folder called "data"
-3. Add an empty folder called "raw"
-4. Go to src>data>DataAugmentation.ipynb> Run cell#1.<br>
-	-input_path = path containing the pictures to be augmented<br>
-	-save_to_dir = path where the augmented images are going to be saved
-5. Split images using DataAugmentation.ipynb cell#2.<br>
-	-root_dir = path kung san ilalagay yung splitted images<br>
-	-src = path of augmented images
-6. Add "doctors" folder in raw
-7. Add 3 subfolder: images, label, split<br>
-	-images: all of the images<br>
-	-split: txt files containing the file names of the images for test,train, and validation<br>
-		- how to generate txt file:<br>
-			a.Open command prompt and change directory to the folder containing the training images<br>
-			b.run: dir/b>train.txt<br>
-			c. Repeat steps a-b with test and validation images (change filename into test.txt and val.txt)<br>
-			d. Open EACH txt file using Notepad++. Click Ctrl+F, go to the Replace tab, Find .jpg and replace with nothing. Click replace all.<br>
-			e. mapupunta sa train, test, and split folders yung txt file. cut mo sila palabas and transfer to split folder na ginawa kanina.<br>
-	-label: create an empty txt file with file name "ground_truth.txt"
-8. Go to cmd and navigate to location of project folder.<br>
-	- Run: python -m venv .venv && .venv\Scripts\activate<br>
-	- Run: pip install -r requirements.txt<br>
-	- Run: python main.py --source=doctors --transform<br>
-	- If no module found error occured, install the packages while the virtual environment is still activated.<br>
-	- After running the codes, Run: deactivate and exit the cmd.<br>
-9. Upload "data" and "src" folder in the SAME folder of your Google Drive.
-10. Run 2 Google Drive Environment and below on Google Colab<br>
-<br>
-Changes for tutorial.ipynb:<br>
-- 2.2 Google Drive > change %cd ".gdrive/MyDrive/xxxx to the location of your src folder<br>
-- 3.1 Environment<br>
-	- source="doctors"<br>
-	- arch="cnn_bilstm"<br>
-	- magdagdag ng folder name sa dulo ng output_path. example:<br>
-		output_path = os.path.join("..", "output", source, arch, "without preprocessing")<br>
-- 3.3 HTRModel Class<br>
-	- add the following inside model.compile, after learnig_rate<br>
-		initial_step=0, target="model.jpg", output=output_path<br>
-- 4 Training<br>
-	- Go to cell 1 and click " + Code" (nasa upper left)<br>
-	- paste this to the newly added cell<br>
-	<br>
-from matplotlib import pyplot as plt
+A thesis by Ashnee Gaile C. Cabais, Camille Dawn C. Gaanan, Trixcie Jane S. Mirasol, and Carl Joseph A. Paez.
 
-loss = h.history['loss']
-val_loss = h.history['val_loss']
+Handwritten Text Recognition (HTR) system implemented using Tensorflow and trained on gathered doctors' cursive handwriting images. This Neural Network model recognizes the text contained in the images of segmented texts lines, and uses Compass Edge Detection as a preprocessing method.
 
-epochs_range = range(120)
+## Preparation of System:
+On localhost:
+- Download the zip file `dataset.zip` and `main.zip` and extract all in your preferred location. 
+- Download the zip file `main.zip` and extract all in your preferred location. Your project directory for the will be like this:
+.
+├── data
+│
+├── raw
+│   ├── doctors
+│   │   ├── images
+│   │   ├── label
+│   │   ├── split
+└── src
+    ├── data
+    │   ├──DataAugmentation.ipynb
+    │   ├── evaluation.py
+    │   ├── generator.py
+    │   ├── preproc.py
+    │   ├── reader.py
+    ├── main.py
+    ├── network
+    │   ├── model.py
+    └── tutorial.ipynb
 
-plt.figure(figsize=(30, 10))
+In DataAugmentation.ipynb, change the strings of `src`, `parent`, and `aug_dir` such that:
+    - src = location of the extracted files from `dataset.zip`.
+    - parent = location of the raw > doctors > images subfolder. Take note that the string has an addition `/` at the end.
+    - train_aug = location of an empty folder that will contain the augmented training images later on.
 
-plt.subplot(1, 2, 2)
-plt.plot(epochs_range, loss, label='Training Loss')
-plt.plot(epochs_range, val_loss, label='Validation Loss')
-plt.legend(loc='upper right')
-plt.title('Training and Validation Loss')
-plt.show()
+Run the first and only cell in DataAugmentation.ipynb. This will create two new csv files named `data.csv` and `train_aug.csv` under the  same hierarchy of the notebook. Three text files named `train.txt`,`val.txt`, and `test.txt` will also be created under raw > doctors > split.
 
-NOTE: change epochs_range = range(CHANGE HERE)
-CHANGE HERE = number of total epochs na nagawa after training
+On your command line, navigate to the location where you extracted `main.zip`. 
+
+After that, create virtual environment and install the dependencies with python 3 and pip:
+`python -m venv .venv && .venv\Scripts\activate`
+`pip install -r requirements.txt`
+
+Go to `src` and run `python main.py --source=doctors --transform` to create the hdf5 file containing the images and their corresponding groud truth.
+
+If no module found error occurred, install the packages while the virtual environment is still activated using the `pip install` command.
+
+After creating the hdf5 file, this wll save under the data subfolder. Run `Deactivate` and close the project.
+
+In your Google Drive, create a folder containing the `data` and `src` subfolders of the project.
+
+Open `main.ipynb` on your Google Colab, ensuring that it is using GPU. At 1.2 Google Drive, make sure to modify the grive location to your directory.  
+
+## Training the System and Testing it by Batch
+Run `main.ipynb` on your Google Colab to train and test the dataset. Feel free to modify the epochs, batch size, input size, beam width, stop tolerance, and redce tolerance to your liking.

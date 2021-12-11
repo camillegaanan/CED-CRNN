@@ -7,10 +7,8 @@ import string
 import random
 import numpy as np
 import multiprocessing
-import xml.etree.ElementTree as ET
 
 from pathlib import Path
-from glob import glob
 from tqdm import tqdm
 from data import preproc as pp
 from functools import partial
@@ -48,7 +46,7 @@ class Dataset():
             for pt in self.partitions:
                 self.dataset[pt] = self.check_text(self.dataset[pt], max_text_length)
                 size = (len(self.dataset[pt]['dt']),) + image_input_size[:2]
-                total += size[0]
+                total += size[0] #total images in partition (1848, 35, 148)
 
                 dummy_image = np.zeros(size, dtype=np.uint8)
                 dummy_sentence = [("c" * max_text_length).encode()] * size[0]
@@ -111,31 +109,32 @@ class Dataset():
         image_name = []
         data_dir = Path(os.path.join(self.source, "images"))
         for filename in os.listdir(data_dir):
-            image_name.append(filename)
-            if filename.find("Azathioprine") != -1:
-                image_texts.append("Azathioprine: 3-5 mg/kg Per os OD")
-            elif filename.find("Ceftriaxone") != -1:
-                image_texts.append("Ceftriaxone: 2 g IV q24h")
-            elif filename.find("Chlorpromazine") != -1:
-                image_texts.append("Chlorpromazine: 10-25 mg Per os three times a day")
-            elif filename.find("Dobutamine") != -1:
-                image_texts.append("Dobutamine: 2.5-15 mcg/kg/min")
-            elif filename.find("Hydroxyzine") != -1:
-                image_texts.append("Hydroxyzine: 50-100 mg by IJ qds")
-            elif filename.find("Lorazepam") != -1:
-                image_texts.append("Lorazepam: 1 mg Per os 2 times a day")
-            elif filename.find("Metronidazole") != -1:
-                image_texts.append("Metronidazole: 7.5 mg/kg Per os q6hr")
-            elif filename.find("Prednisolone") != -1:
-                image_texts.append("Prednisolone: 5-60 mg per day qds")
-            elif filename.find("Quinine") != -1:
-                image_texts.append("Quinine: 648 mg Per os every 8 hours for 7 days")
-            elif filename.find("Risperidone") != -1:
-                image_texts.append("Risperidone: 2 mg orally i/d")
-            elif filename.find("Rituximab") != -1:
-                image_texts.append("Rituximab: 375 mg/m2 IV once weekly")
-            else:
-                image_texts.append("Tramadol: 50-100 mg as needed every 4 to 6 hours")
+            if filename.endswith(".png"):
+                image_name.append(filename)
+                if filename.find("Azathioprine") != -1:
+                    image_texts.append("Azathioprine: 3-5 mg/kg Per os OD")
+                elif filename.find("Ceftriaxone") != -1:
+                    image_texts.append("Ceftriaxone: 2 g IV q24h")
+                elif filename.find("Chlorpromazine") != -1:
+                    image_texts.append("Chlorpromazine: 10-25 mg Per os three times a day")
+                elif filename.find("Dobutamine") != -1:
+                    image_texts.append("Dobutamine: 2.5-15 mcg/kg/min")
+                elif filename.find("Hydroxyzine") != -1:
+                    image_texts.append("Hydroxyzine: 50-100 mg by IJ qds")
+                elif filename.find("Lorazepam") != -1:
+                    image_texts.append("Lorazepam: 1 mg Per os 2 times a day")
+                elif filename.find("Metronidazole") != -1:
+                    image_texts.append("Metronidazole: 7.5 mg/kg Per os q6hr")
+                elif filename.find("Prednisolone") != -1:
+                    image_texts.append("Prednisolone: 5-60 mg per day qds")
+                elif filename.find("Quinine") != -1:
+                    image_texts.append("Quinine: 648 mg Per os every 8 hours for 7 days")
+                elif filename.find("Risperidone") != -1:
+                    image_texts.append("Risperidone: 2 mg orally i/d")
+                elif filename.find("Rituximab") != -1:
+                    image_texts.append("Rituximab: 375 mg/m2 IV once weekly")
+                elif filename.find("Tramadol") != -1:
+                    image_texts.append("Tramadol: 50-100 mg as needed every 4 to 6 hours")
 
         with open(os.path.join(self.source, "label", "ground_truth.txt"), 'w') as f:
             for name, label in zip(image_name,image_texts):
@@ -173,6 +172,8 @@ class Dataset():
                     dataset[i]['gt'].append(gt_dict[line])
         return dataset
 
+    #to check if ground truth < 128
+    #to check if ground truth has texts
     @staticmethod
     def check_text(data, max_text_length=128):
         """Checks if the text has more characters instead of punctuation marks"""

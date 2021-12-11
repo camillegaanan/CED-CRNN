@@ -29,7 +29,7 @@ class HTRModel:
 
         self.architecture = globals()[architecture]
         self.input_size = input_size
-        self.vocab_size = vocab_size
+        self.vocab_size = vocab_size #97
 
         self.model = None
         self.greedy = greedy
@@ -141,14 +141,10 @@ class HTRModel:
 
         if verbose == 1:
             print("Model Predict")
-
         out = self.model.predict(x=x, batch_size=batch_size, verbose=verbose, steps=steps,
                                  callbacks=callbacks, max_queue_size=max_queue_size,
                                  workers=workers, use_multiprocessing=use_multiprocessing)
-
-        if not ctc_decode:
-            return np.log(out.clip(min=1e-8)), []
-
+       
         steps_done = 0
         if verbose == 1:
             print("CTC Decode")
@@ -158,7 +154,6 @@ class HTRModel:
         input_length = len(max(out, key=len))
 
         predicts, probabilities = [], []
-
         while steps_done < steps:
             index = steps_done * batch_size
             until = index + batch_size

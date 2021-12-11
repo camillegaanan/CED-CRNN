@@ -1,5 +1,3 @@
-import string
-import unicodedata
 import editdistance
 import numpy as np
 import os
@@ -41,14 +39,6 @@ def ocr_metrics(predicts, ground_truth, output_path, norm_accentuation=False, no
     for (pd, gt) in zip(predicts, ground_truth):
         pd, gt = pd.lower(), gt.lower()
 
-        if norm_accentuation:
-            pd = unicodedata.normalize("NFKD", pd).encode("ASCII", "ignore").decode("ASCII")
-            gt = unicodedata.normalize("NFKD", gt).encode("ASCII", "ignore").decode("ASCII")
-
-        if norm_punctuation:
-            pd = pd.translate(str.maketrans("", "", string.punctuation))
-            gt = gt.translate(str.maketrans("", "", string.punctuation))
-
         pd_cer, gt_cer = list(pd), list(gt)
         dist = editdistance.eval(pd_cer, gt_cer)
         cer.append(dist / (max(len(pd_cer), len(gt_cer))))
@@ -59,15 +49,15 @@ def ocr_metrics(predicts, ground_truth, output_path, norm_accentuation=False, no
 
         for word in pd_wer:
             if word in gt_wer:
-                acc_word+=1
+                acc_word+=1 #count accurate words
 
         for word in gt_wer:
-            if word not in pd_wer:
+            if word not in pd_wer: #if misclassifed
                 if word in word_dict:
                     word_dict[word] += 1
                 else:
                     word_dict[word] = 1
-            else:
+            else: #if classified
                 if word in word_dict2:
                     word_dict2[word] += 1
                 else:
@@ -101,9 +91,9 @@ def ocr_metrics(predicts, ground_truth, output_path, norm_accentuation=False, no
         elif gt.find("tramadol") != -1:
             i = 11
             
-        for word in pd_wer:
-                if word in gt_wer:
-                    acc_word_label[i]+=1
+        for word in pd_wer: #for every predicted word
+                if word in gt_wer: #if classified
+                    acc_word_label[i]+=1 #accuracy for each label
         num_of_expected_words_label[i] += len(gt_wer)
         num_of_recognized_words_label[i] += len(pd_wer)
         dist = editdistance.eval(pd_cer, gt_cer)
@@ -192,9 +182,6 @@ def statistical_test():
     #cabais no noise skeleton
     cer_simpler = [0.08333333333333333, 0.0, 0.0, 0.06, 0.0, 0.0, 0.6530612244897959, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.14, 0.0, 0.0, 0.027777777777777776, 0.0, 0.0, 0.06060606060606061, 0.0, 0.0, 0.0, 0.0, 0.16326530612244897, 0.0, 0.0, 0.10638297872340426, 0.0, 0.0, 0.034482758620689655, 0.0, 0.2916666666666667, 0.0, 0.22, 0.0, 0.3333333333333333, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.48484848484848486, 0.0, 0.0, 0.0, 0.0, 0.0, 0.12121212121212122, 0.0, 0.0, 0.0, 0.13725490196078433, 0.0, 0.02857142857142857, 0.2857142857142857, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.03125, 0.0, 0.0, 0.0, 0.0, 0.15151515151515152, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.6857142857142857, 0.02040816326530612, 0.0, 0.0, 0.0, 0.0, 0.4230769230769231, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.1111111111111111, 0.0, 0.0, 0.030303030303030304, 0.0, 0.0, 0.0, 0.0, 0.35294117647058826, 0.0, 0.0, 0.0, 0.02702702702702703, 0.04081632653061224, 0.0, 0.0, 0.0, 0.05263157894736842, 0.0, 0.0, 0.0, 0.0, 0.0, 0.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.36363636363636365, 0.0, 0.5625, 0.0, 0.0, 0.0]
 
-    #fajardo no noise skeleton
-    # cer_fajardo = [0.0, 0.0, 0.0, 0.061224489795918366, 0.0, 0.06666666666666667, 0.6122448979591837, 0.0, 0.0, 0.02040816326530612, 0.0, 0.0, 0.041666666666666664, 0.0, 0.18181818181818182, 0.0, 0.0, 0.0, 0.0, 0.0, 0.04081632653061224, 0.0, 0.0, 0.0, 0.0, 0.0, 0.30303030303030304, 0.0, 0.02857142857142857, 0.0, 0.10526315789473684, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.41379310344827586, 0.0, 0.020833333333333332, 0.06060606060606061, 0.24489795918367346, 0.0, 0.0625, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.2727272727272727, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.3541666666666667, 0.0, 0.0, 0.1836734693877551, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.1, 0.0, 0.030303030303030304, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.6571428571428571, 0.0, 0.0, 0.0, 0.0, 0.0, 0.041666666666666664, 0.0, 0.0, 0.15625, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.1388888888888889, 0.0, 0.0, 0.2571428571428571, 0.0, 0.027777777777777776, 0.0, 0.0, 0.030303030303030304, 0.0, 0.0, 0.0, 0.0, 0.02, 0.0, 0.0, 0.0, 0.0, 0.027777777777777776, 0.0, 0.0, 0.0, 0.0, 0.0, 0.027777777777777776, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.24242424242424243, 0.0, 0.42857142857142855, 0.0, 0.0, 0.20408163265306123]
-
     acc_fajardo2 = []
     acc_simpler2 = []
     for x, y in zip(cer_fajardo, cer_simpler):
@@ -210,29 +197,64 @@ def statistical_test():
     cer_diff = []
     for x, y in zip(acc_fajardo2, acc_simpler2):
         cer_diff.append(x-y)
+    
+    #preproc 5 trials
+    preproc_fajardo=[53.656895,48.941566,50.6347,54.08667,55.76713]
+    preproc_simpler = [73.182085,72.76792,67.45303,68.44751,66.90292]
 
+    #train 5 trials
+    train_fajardo = [6094,4815.986236,5903.584694,5910.642649,6095.65]
+    train_simpler = [3900,3840,3871.8,4002.97662,3757.444622]
 
-    time_fajardo = [53.656895, 6094, 102.94]
-    time_simpler = [73.182085, 3900, 28.48]
+    #test 5 trials
+    test_fajardo = [102.94,149.279583,89.204952,149.265552,98.396474]
+    test_simpler = [28.48,22.761658,29.323922,30.339126,26.992119]
 
-    time_diff = []
-    for x, y in zip(time_fajardo, time_simpler):
-        time_diff.append(x-y)
-    print(time_diff)
+    preproc_diff = []
+    for x, y in zip(preproc_fajardo, preproc_simpler):
+        preproc_diff.append(x-y)
+
+    train_diff = []
+    for x, y in zip(train_fajardo, train_simpler):
+        train_diff.append(x-y)
+
+    test_diff = []
+    for x, y in zip(test_fajardo, test_simpler):
+        test_diff.append(x-y)
 
     shapiro_statistic, p = shapiro(cer_diff)
     print('Shapiro statistic of the differences in CER:', shapiro_statistic)
     print('p-value of the differences in CER:', p)
 
-    shapiro_statistic, p = shapiro(time_diff)
-    print('Shapiro statistic of the differences in time:', shapiro_statistic)
-    print('p-value of the differences in CER:', p)
+    shapiro_statistic, p = shapiro(preproc_diff)
+    print('Shapiro statistic of the differences in preprocessing time:', shapiro_statistic)
+    print('p-value of the differences in preprocessing time:', p)
 
-    r = pyasl.generalizedESD(time_diff, 3, 0.05, fullOutput=True)
-    print('Number of outliers for the differences in time:',r[0])
+    r = pyasl.generalizedESD(preproc_diff, 5, 0.05, fullOutput=True)
+    print('Number of outliers for the differences in preprocessing time:',r[0], r[1])
+
+    shapiro_statistic, p = shapiro(train_diff)
+    print('Shapiro statistic of the differences in training time:', shapiro_statistic)
+    print('p-value of the differences in training time:', p)
+
+    r = pyasl.generalizedESD(train_diff, 5, 0.05, fullOutput=True)
+    print('Number of outliers for the differences in training time:',r[0], r[1])
+
+    shapiro_statistic, p = shapiro(test_diff)
+    print('Shapiro statistic of the differences in testing time:', shapiro_statistic)
+    print('p-value of the differences in testing time:', p)
+
+    r = pyasl.generalizedESD(test_diff, 5, 0.05, fullOutput=True)
+    print('Number of outliers for the differences in testing time:',r[0], r[1])
 
     r = wilcoxon(acc_fajardo2,acc_simpler2,  alternative="less")
-    print(r)
+    print('Wilcoxon result for the accuracy:', r)
 
-    r = wilcoxon(time_fajardo, time_simpler, alternative="greater")
-    print(r)
+    r = wilcoxon(preproc_fajardo, preproc_simpler, alternative="greater")
+    print('Wilcoxon result for the preprocessing time:', r)
+
+    r = wilcoxon(train_fajardo, train_simpler, alternative="greater")
+    print('Wilcoxon result for the training time:', r)
+
+    r = wilcoxon(test_fajardo, test_simpler, alternative="greater")
+    print('Wilcoxon result for the testing time:', r)
